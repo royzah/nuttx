@@ -37,6 +37,7 @@
 #include "arm_internal.h"
 #include "hardware/rt117x/imxrt117x_caam.h"
 #include "imxrt_caam.h"
+#include "imxrt_caam_desc.h"
 #include "imxrt_periphclks.h"
 
 #ifdef CONFIG_IMXRT_CAAM
@@ -62,16 +63,6 @@
 #define CAAM_RNG_BLOCKLEN     ARMV7M_DCACHE_LINESIZE
 
 #define CAAM_DESC_WORDS       8
-
-/* Descriptor words, from the SEC reference descriptor encoding. */
-
-#define CAAM_DESC_HDR(len)    (0xb0800000 | (len))
-#define CAAM_OP_RNG_GENERATE  0x82500002
-#define CAAM_OP_RNG_INIT_SH0  0x82500006
-#define CAAM_OP_RNG_GEN_SK    0x82501000
-#define CAAM_JUMP_WAIT_CLASS1 0xa2000001
-#define CAAM_LOAD_CLRW        0x10880004
-#define CAAM_FIFO_STORE_RNG   0x60340000
 
 /* Entropy sample length, in system clocks. A self test that fails is
  * retried with a longer one, which is how NXP's own code finds a value
