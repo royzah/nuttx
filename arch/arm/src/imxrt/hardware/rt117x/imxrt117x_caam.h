@@ -47,6 +47,7 @@
 
 #define IMXRT_CAAM_MCFGR_OFFSET       0x0004
 #define IMXRT_CAAM_SCFGR_OFFSET       0x000c
+#define IMXRT_CAAM_JRSTART_OFFSET     0x005c
 
 /* RNG4 block, inside the general block */
 
@@ -57,6 +58,7 @@
 #define IMXRT_CAAM_RDSTA_OFFSET       0x06c0
 
 #define IMXRT_CAAM_MCFGR              (IMXRT_CAAM_GEN_BASE + IMXRT_CAAM_MCFGR_OFFSET)
+#define IMXRT_CAAM_JRSTART            (IMXRT_CAAM_GEN_BASE + IMXRT_CAAM_JRSTART_OFFSET)
 #define IMXRT_CAAM_SCFGR              (IMXRT_CAAM_GEN_BASE + IMXRT_CAAM_SCFGR_OFFSET)
 #define IMXRT_CAAM_RTMCTL             (IMXRT_CAAM_GEN_BASE + IMXRT_CAAM_RTMCTL_OFFSET)
 #define IMXRT_CAAM_RTSDCTL            (IMXRT_CAAM_GEN_BASE + IMXRT_CAAM_RTSDCTL_OFFSET)
@@ -100,7 +102,13 @@
 
 #define CAAM_MCFGR_SWRST              (1 << 31)  /* Software reset */
 #define CAAM_MCFGR_DMA_RST            (1 << 28)  /* DMA reset */
-#define CAAM_MCFGR_WDE                (1 << 30)  /* Write-back disable */
+#define CAAM_MCFGR_WDE                (1 << 30)  /* DECO watchdog enable */
+#define CAAM_MCFGR_LARGE_BURST        (1 << 2)   /* 128/256-byte bursts */
+#define CAAM_MCFGR_AWCACHE_MASK       (0xf << 8)
+#define CAAM_MCFGR_AWCACHE_BUFF       (0x1 << 8)
+#define CAAM_MCFGR_AWCACHE_CACH       (0x2 << 8)
+
+#define CAAM_JRSTART_JR0              (1 << 0)   /* Start job ring zero */
 
 /* JRCR, JRINT, JRCFG1 */
 

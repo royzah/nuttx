@@ -28,6 +28,7 @@
 
 #include <debug.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -68,6 +69,8 @@
  * retried with a longer one, which is how NXP's own code finds a value
  * that passes across voltage and temperature.
  */
+
+#define CAAM_INSTANTIATE_SETTLE 20000
 
 #define CAAM_ENT_DELAY_MIN    3200
 #define CAAM_ENT_DELAY_MAX    12800
@@ -130,6 +133,8 @@ static void imxrt_caam_invalidate(void *addr, size_t len)
  *   never answered.
  *
  *****************************************************************************/
+
+static int imxrt_caam_ring_init(void);
 
 static int imxrt_caam_run(void)
 {
@@ -251,11 +256,31 @@ static int imxrt_caam_rng_init(void)
        ent_delay <= CAAM_ENT_DELAY_MAX;
        ent_delay += CAAM_ENT_DELAY_STEP)
     {
+      int settle;
+
       imxrt_caam_kick_trng(ent_delay);
 
       ret = imxrt_caam_instantiate(gen_sk);
-      if (ret == OK &&
-          (getreg32(IMXRT_CAAM_RDSTA) & CAAM_RDSTA_IF0) != 0)
+
+      /* The state handle is the only report this descriptor makes. The job
+       * ring does not answer for it, so the ring's verdict is not the test.
+       */
+
+      for (settle = CAAM_INSTANTIATE_SETTLE; settle > 0; settle--)
+        {
+          if ((getreg32(IMXRT_CAAM_RDSTA) & CAAM_RDSTA_IF0) != 0)
+            {
+              return OK;
+            }
+
+          up_udelay(100);
+        }
+
+      /* The handle latches when the ring is taken back to a known state. */
+
+      imxrt_caam_ring_init();
+
+      if ((getreg32(IMXRT_CAAM_RDSTA) & CAAM_RDSTA_IF0) != 0)
         {
           return OK;
         }
@@ -326,6 +351,13 @@ int imxrt_caam_initialize(void)
     }
 
   imxrt_clockall_caam();
+
+
+  modifyreg32(IMXRT_CAAM_MCFGR, CAAM_MCFGR_AWCACHE_MASK,
+              CAAM_MCFGR_AWCACHE_CACH | CAAM_MCFGR_AWCACHE_BUFF |
+              CAAM_MCFGR_WDE | CAAM_MCFGR_LARGE_BURST);
+
+  modifyreg32(IMXRT_CAAM_JRSTART, 0, CAAM_JRSTART_JR0);
 
   ret = imxrt_caam_ring_init();
   if (ret < 0)
