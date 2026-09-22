@@ -24,7 +24,7 @@
 
 MEMORY
 {
-  flash (rx)  : ORIGIN = 0x30000000, LENGTH = 16M
+  flash (rx)  : ORIGIN = 0x30020000, LENGTH = 4M-128K /* loaded by the PX4 bootloader */
   sram  (rwx) : ORIGIN = 0x20240000, LENGTH = 1024K /* OCRAM1 + OCRAM2*/
   itcm  (rwx) : ORIGIN = 0x00000000, LENGTH = 256K   /* TODO FlexRAM partition */
   dtcm  (rwx) : ORIGIN = 0x20000000, LENGTH = 256K
