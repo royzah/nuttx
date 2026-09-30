@@ -72,7 +72,8 @@
  ****************************************************************************/
 
 static int file_vopen(FAR struct file *filep, FAR const char *path,
-                      int oflags, mode_t umask, va_list ap)
+                      int oflags, mode_t umask, bool fdopen,
+                      va_list ap)
 {
   struct inode_search_s desc;
   FAR struct inode *inode;
@@ -147,6 +148,12 @@ static int file_vopen(FAR struct file *filep, FAR const char *path,
       return -ELOOP;
     }
 #endif
+
+  if (fdopen && INODE_IS_RAWIO(inode) && !nxsched_capable(PR_CAP_RAWIO))
+    {
+      ret = -EPERM;
+      goto errout_with_inode;
+    }
 
 #if defined(CONFIG_BCH) && \
     !defined(CONFIG_DISABLE_MOUNTPOINT) && \
@@ -317,7 +324,7 @@ static int nx_vopen(FAR struct fdlist *list,
       return -ENOMEM;
     }
 
-  ret = file_vopen(filep, path, oflags, getumask(), ap);
+  ret = file_vopen(filep, path, oflags, getumask(), true, ap);
   if (ret < 0)
     {
       file_deallocate(filep);
@@ -368,7 +375,7 @@ int file_open(FAR struct file *filep, FAR const char *path, int oflags, ...)
   memset(filep, 0, sizeof(*filep));
 
   va_start(ap, oflags);
-  ret = file_vopen(filep, path, oflags, 0, ap);
+  ret = file_vopen(filep, path, oflags, 0, false, ap);
   va_end(ap);
 
   if (ret >= OK)

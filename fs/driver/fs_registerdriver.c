@@ -36,6 +36,51 @@
 #include "vfs/vfs.h"
 
 /****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+static int register_driver_flags(FAR const char *path,
+                                 FAR const struct file_operations *fops,
+                                 mode_t mode, FAR void *priv, size_t size,
+                                 uint16_t flags)
+{
+  FAR struct inode *node;
+  int               ret;
+
+  sched_note_mark(NOTE_TAG_DRIVERS, path);
+
+  /* Insert a dummy node -- we need to hold the inode semaphore because we
+   * will have a momentarily bad structure.
+   */
+
+  inode_lock();
+  ret = inode_reserve(path, mode, &node);
+  if (ret >= 0)
+    {
+      /* We have it, now populate it with driver specific information.
+       * NOTE that the initial reference count on the new inode is zero.
+       */
+
+      INODE_SET_DRIVER(node);
+
+      node->u.i_ops   = fops;
+      node->i_private = priv;
+      node->i_size    = size;
+      node->i_flags  |= flags;
+
+      inode_unlock();
+#ifdef CONFIG_FS_NOTIFY
+      notify_create(path);
+#endif
+
+      return OK;
+    }
+
+  inode_unlock();
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -68,39 +113,7 @@ int register_driver_with_size(FAR const char *path,
                               FAR const struct file_operations *fops,
                               mode_t mode, FAR void *priv, size_t size)
 {
-  FAR struct inode *node;
-  int               ret;
-
-  sched_note_mark(NOTE_TAG_DRIVERS, path);
-
-  /* Insert a dummy node -- we need to hold the inode semaphore because we
-   * will have a momentarily bad structure.
-   */
-
-  inode_lock();
-  ret = inode_reserve(path, mode, &node);
-  if (ret >= 0)
-    {
-      /* We have it, now populate it with driver specific information.
-       * NOTE that the initial reference count on the new inode is zero.
-       */
-
-      INODE_SET_DRIVER(node);
-
-      node->u.i_ops   = fops;
-      node->i_private = priv;
-      node->i_size    = size;
-
-      inode_unlock();
-#ifdef CONFIG_FS_NOTIFY
-      notify_create(path);
-#endif
-
-      return OK;
-    }
-
-  inode_unlock();
-  return ret;
+  return register_driver_flags(path, fops, mode, priv, size, 0);
 }
 
 /****************************************************************************
@@ -131,4 +144,11 @@ int register_driver(FAR const char *path,
                     mode_t mode, FAR void *priv)
 {
   return register_driver_with_size(path, fops, mode, priv, 0);
+}
+
+int register_rawdriver(FAR const char *path,
+                       FAR const struct file_operations *fops,
+                       mode_t mode, FAR void *priv)
+{
+  return register_driver_flags(path, fops, mode, priv, 0, FSNODEFLAG_RAWIO);
 }
