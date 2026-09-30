@@ -187,6 +187,15 @@ int prctl(int option, ...)
         goto errout;
 #endif
 
+      case PR_CAPS_DROP:
+        this_task()->group->tg_caps &= ~va_arg(ap, int);
+        va_end(ap);
+        return OK;
+
+      case PR_CAPS_GET:
+        va_end(ap);
+        return this_task()->group->tg_caps;
+
       default:
         serr("ERROR: Unrecognized option: %d\n", option);
         errcode = EINVAL;
