@@ -31,6 +31,7 @@
 #include <errno.h>
 
 #include <nuttx/kmalloc.h>
+#include <nuttx/sched.h>
 #include <nuttx/binfmt/binfmt.h>
 
 #include "binfmt.h"
@@ -269,6 +270,12 @@ int exec(FAR const char *filename, FAR char * const *argv,
          int nexports)
 {
   int ret;
+
+  if (!nxsched_capable(PR_CAP_SPAWN))
+    {
+      set_errno(EPERM);
+      return ERROR;
+    }
 
   ret = exec_internal(filename, argv, envp,
                       exports, nexports, NULL, NULL, false);

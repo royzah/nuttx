@@ -208,6 +208,12 @@ int task_create_with_stack(FAR const char *name, int priority,
 {
   int ret;
 
+  if (!nxsched_capable(PR_CAP_SPAWN))
+    {
+      set_errno(EPERM);
+      return ERROR;
+    }
+
 #ifdef CONFIG_FDPIC
   /* Resolve here, once: this covers task_create() too, which is a plain
    * forwarder.  The new task inherits the creator's D-Space.

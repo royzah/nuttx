@@ -339,6 +339,11 @@ int task_spawn(FAR const char *name, main_t entry,
   pid_t pid = INVALID_PROCESS_ID;
   int ret;
 
+  if (!nxsched_capable(PR_CAP_SPAWN))
+    {
+      return -EPERM;
+    }
+
 #ifdef CONFIG_FDPIC
   /* Resolve the descriptor once, in the public entry point.  The new task
    * inherits the creator's D-Space.

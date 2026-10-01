@@ -34,6 +34,7 @@
 #include <nuttx/debug.h>
 
 #include <nuttx/fs/fs.h>
+#include <nuttx/sched.h>
 
 #include "driver/driver.h"
 #include "inode/inode.h"
@@ -591,6 +592,12 @@ int mount(FAR const char *source, FAR const char *target,
           FAR const void *data)
 {
   int ret;
+
+  if (!nxsched_capable(PR_CAP_RAWIO))
+    {
+      set_errno(EPERM);
+      return ERROR;
+    }
 
   ret = nx_mount(source, target, filesystemtype, mountflags, data);
   if (ret < 0)

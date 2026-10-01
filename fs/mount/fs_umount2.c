@@ -32,6 +32,7 @@
 #include <assert.h>
 
 #include <nuttx/fs/fs.h>
+#include <nuttx/sched.h>
 
 #include "inode/inode.h"
 #include "vfs/vfs.h"
@@ -238,6 +239,12 @@ errout:
 int umount2(FAR const char *target, unsigned int flags)
 {
   int ret;
+
+  if (!nxsched_capable(PR_CAP_RAWIO))
+    {
+      set_errno(EPERM);
+      return ERROR;
+    }
 
   ret = nx_umount2(target, flags);
   if (ret < 0)
