@@ -12,7 +12,9 @@ with ``EPERM``. Every build, the kernel and init start with all three.
                    ``mount()``, ``umount2()``
 ``PR_CAP_SPAWN``   ``posix_spawn()``, ``task_spawn()``,
                    ``task_create()``, ``exec()``, ``execve()``
-``PR_CAP_ADMIN``   ``boardctl()`` reset and poweroff
+``PR_CAP_ADMIN``   ``boardctl()`` reset and poweroff; signalling,
+                   rescheduling, cancelling or renaming a thread of
+                   another process (signal 0 stays open)
 =================  ==================================================
 
 .. code-block:: c
@@ -22,5 +24,5 @@ with ``EPERM``. Every build, the kernel and init start with all three.
 
 A drop is permanent. The set lives in the task group and a new group copies
 its creator's. Kernel code uses the unchecked ``file_open()``,
-``nx_mount()`` and ``nx_umount2()``. Raw storage drivers register with
-``register_rawdriver()``.
+``nx_mount()``, ``nx_umount2()`` and the other ``nx`` variants. Raw storage
+drivers register with ``register_rawdriver()``.
